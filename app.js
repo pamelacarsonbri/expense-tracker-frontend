@@ -227,16 +227,38 @@ async function loadBudgets() {
     }
 
     list.innerHTML = data.map(b => `
-      <div class="budget-item">
+      <div class="budget-item" id="budget-${b.category}">
         <div class="budget-item-cat">
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CAT_COLORS[b.category] || "#6b7280"};margin-right:8px;"></span>
           ${b.category}
         </div>
-        <div class="budget-item-amt">GHS ${b.amount.toFixed(2)} / month</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="budget-item-amt">GHS ${b.amount.toFixed(2)} / month</div>
+          <button class="btn-delete" onclick="resetBudget('${b.category}')">Reset</button>
+        </div>
       </div>
     `).join("");
   } catch {
     list.innerHTML = `<div class="empty-state">Could not load budgets.</div>`;
+  }
+}
+
+async function resetBudget(category) {
+  if (!confirm(`Reset budget for ${category} to GHS 0.00?`)) return;
+  try {
+    const res = await fetch(`${API}/budgets/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category, amount: 0.01 })
+    });
+    if (res.ok) {
+      loadBudgets();
+      loadDashboard();
+    } else {
+      alert("Could not reset budget.");
+    }
+  } catch {
+    alert("Could not connect to the API.");
   }
 }
 
